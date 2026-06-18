@@ -10,9 +10,9 @@
         "description": "まもる棚は、食品、日用品、防災用品などの期限を見やすく管理するためのアプリです。期限が近いもの、確認が必要なもの、完了したものを分けて表示できます。かんたんモードでは、小さな子どもやスマホ操作に慣れていない家族でも見やすい画面になります。",
         "keywords": ["備蓄,期限,防災,食品,日用品,管理,家族,ストック"],
         "releaseNotes": "初回リリース。",
-        "privacyPolicyUrl": "https://YOUR_GITHUB_USER.github.io/mamoru-tana/privacy.html",
-        "supportUrl": "https://YOUR_GITHUB_USER.github.io/mamoru-tana/support.html",
-        "marketingUrl": "https://YOUR_GITHUB_USER.github.io/mamoru-tana/"
+        "privacyPolicyUrl": "https://takasakabaka.github.io/mamoru-tana/privacy.html",
+        "supportUrl": "https://takasakabaka.github.io/mamoru-tana/support.html",
+        "marketingUrl": "https://takasakabaka.github.io/mamoru-tana/"
       }
     },
     "advisory": {
