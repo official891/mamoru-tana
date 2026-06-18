@@ -1,10 +1,10 @@
 import * as Haptics from "expo-haptics";
 import { createContext, use, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { buildBackupText, buildCsvText, itemTextLimits, normalizeItems, parseBackupText } from "./backup";
 import { canUsePaidPlans, isPaidPlanId, paidPlansUnavailableMessage } from "./billing";
 import { categoryMap, createSeedItems, storageKey } from "./data";
 import { daysUntil, isValidDateValue, relativeLabel } from "./date";
+import { itemTextLimits, normalizeItems } from "./item-data";
 import { readJson, writeJson } from "./storage";
 import type { Category, ShelfItem } from "./types";
 
@@ -41,11 +41,8 @@ type AppState = {
   currentPlan: Plan;
   doneItems: ShelfItem[];
   draftTemplate: DraftItem;
-  exportBackup: () => string;
-  exportCsv: () => string | null;
   filterItems: (query: string) => ShelfItem[];
   getHomeItems: (filter: HomeFilter) => ShelfItem[];
-  importBackup: (raw: string) => boolean;
   isFamilyPlan: boolean;
   isEasyMode: boolean;
   isPaidPlan: boolean;
@@ -72,7 +69,7 @@ export const plans: Plan[] = [
     price: "0円",
     description: "まずは家の期限を試す",
     limitLabel: "15件まで",
-    features: ["端末保存", "今日やること", "バックアップ"],
+    features: ["端末保存", "今日やること", "安全チェック"],
   },
   {
     id: "plus",
@@ -80,7 +77,7 @@ export const plans: Plan[] = [
     price: "480円/月",
     description: "うっかり損を減らす本命",
     limitLabel: "登録無制限",
-    features: ["登録無制限", "復元上限なし", "表で保存"],
+    features: ["登録無制限", "安全チェック強化", "家族準備"],
   },
   {
     id: "family",
@@ -248,16 +245,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       currentPlan,
       doneItems,
       draftTemplate,
-      exportBackup() {
-        return buildBackupText(items);
-      },
-      exportCsv() {
-        if (!isPaidPlan) {
-          setNotice("一覧を表で保存するにはPlus以上が必要です。バックアップはFreeでも使えます。");
-          return null;
-        }
-        return buildCsvText(items);
-      },
       filterItems(query) {
         const normalized = query.trim().toLowerCase();
         return sortByUrgency(items).filter((item) => {
@@ -274,21 +261,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       isEasyMode,
       isFamilyPlan,
       isPaidPlan,
-      importBackup(raw) {
-        const importedItems = parseBackupText(raw);
-        if (!importedItems) {
-          setNotice("バックアップの形式を確認してください。");
-          return false;
-        }
-        if (!isPaidPlan && importedItems.length > freeItemLimit) {
-          setNotice(`Freeでは${freeItemLimit}件まで復元できます。件数を減らすかPlusにしてください。`);
-          return false;
-        }
-        tapLight();
-        setItems(importedItems);
-        setNotice(`${importedItems.length}件を復元しました。`);
-        return true;
-      },
       items,
       notice,
       plan,

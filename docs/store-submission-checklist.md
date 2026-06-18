@@ -7,7 +7,7 @@
 - Androidの不要権限なし
 - EAS本番ビルド用 `eas.json` 追加済み
 - 未接続のPlus/Familyを有効化できないよう制限済み
-- バックアップ入力上限、復元正規化、CSV式インジェクション対策済み
+- 端末内保存データの正規化と入力上限チェック済み
 - プライバシーポリシーと利用規約の原稿追加済み
 - GitHub Pages公開用の `privacy.html`、`terms.html`、`support.html` 追加済み
 

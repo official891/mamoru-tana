@@ -2,8 +2,7 @@ import { categories } from "./data";
 import { isValidDateValue } from "./date";
 import type { Category, RecallStatus, ShelfItem } from "./types";
 
-export const maxBackupItems = 1000;
-export const maxBackupTextLength = 500_000;
+export const maxStoredItems = 1000;
 
 export const itemTextLimits = {
   id: 80,
@@ -16,13 +15,6 @@ export const itemTextLimits = {
 
 const categoryIds = new Set<Category>(categories.map((category) => category.id));
 const recallStatuses = new Set<RecallStatus>(["clear", "watch", "check"]);
-
-type BackupFile = {
-  app: "mamoru-tana";
-  version: 1;
-  exportedAt: string;
-  items: ShelfItem[];
-};
 
 function asString(value: unknown, fallback = "", maxLength = 240): string {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : fallback;
@@ -44,6 +36,10 @@ function asCategory(value: unknown): Category {
 
 function asRecallStatus(value: unknown): RecallStatus {
   return typeof value === "string" && recallStatuses.has(value as RecallStatus) ? (value as RecallStatus) : "clear";
+}
+
+function makeLocalId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export function normalizeShelfItem(value: unknown): ShelfItem | null {
@@ -80,7 +76,7 @@ export function normalizeItems(value: unknown): ShelfItem[] | null {
   const usedIds = new Set<string>();
 
   return value
-    .slice(0, maxBackupItems)
+    .slice(0, maxStoredItems)
     .map(normalizeShelfItem)
     .filter((item): item is ShelfItem => item !== null)
     .map((item) => {
@@ -93,61 +89,4 @@ export function normalizeItems(value: unknown): ShelfItem[] | null {
       usedIds.add(uniqueId);
       return { ...item, id: uniqueId };
     });
-}
-
-export function buildBackupText(items: ShelfItem[]): string {
-  const file: BackupFile = {
-    app: "mamoru-tana",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    items: normalizeItems(items) ?? [],
-  };
-
-  return JSON.stringify(file, null, 2);
-}
-
-export function parseBackupText(raw: string): ShelfItem[] | null {
-  if (raw.length > maxBackupTextLength) return null;
-
-  try {
-    const parsed = JSON.parse(raw);
-    const candidateItems = Array.isArray(parsed) ? parsed : parsed?.items;
-    const items = normalizeItems(candidateItems);
-    return items && items.length > 0 ? items : null;
-  } catch {
-    return null;
-  }
-}
-
-function csvCell(value: unknown): string {
-  const text = escapeSpreadsheetFormula(String(value ?? ""));
-  return `"${text.replace(/"/g, '""')}"`;
-}
-
-function escapeSpreadsheetFormula(text: string): string {
-  return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
-}
-
-function makeLocalId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-export function buildCsvText(items: ShelfItem[]): string {
-  const rows = [
-    ["名前", "カテゴリ", "場所", "期限", "通知日数", "担当", "状態", "安全チェック", "メモ", "作成日"],
-    ...items.map((item) => [
-      item.name,
-      item.category,
-      item.place,
-      item.dueDate,
-      item.reminderDays,
-      item.owner,
-      item.done ? "完了" : "未完了",
-      item.recallStatus,
-      item.notes,
-      item.createdAt,
-    ]),
-  ];
-
-  return rows.map((row) => row.map(csvCell).join(",")).join("\n");
 }

@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import type { ComponentType } from "react";
-import { Crown, Download, Lock, RotateCcw, ShieldCheck, Upload, Users } from "lucide-react-native";
+import { Crown, Lock, RotateCcw, ShieldCheck, Users } from "lucide-react-native";
 import { freeItemLimit, plans, useAppState } from "@/src/app-state";
-import { maxBackupTextLength } from "@/src/backup";
 import { paidPlansUnavailableMessage } from "@/src/billing";
 import { ActionButton, NoticeBar, Screen, SectionHeader } from "@/src/components";
 import { colors, radius, shadows } from "@/src/theme";
@@ -14,9 +13,6 @@ export default function SettingsScreen() {
     arePaidPlansEnabled,
     choosePlan,
     currentPlan,
-    exportBackup,
-    exportCsv,
-    importBackup,
     isEasyMode,
     isFamilyPlan,
     isPaidPlan,
@@ -27,11 +23,7 @@ export default function SettingsScreen() {
     setEasyMode,
     setNotice,
   } = useAppState();
-  const [exportTitle, setExportTitle] = useState("");
-  const [exportPayload, setExportPayload] = useState("");
   const [resetArmed, setResetArmed] = useState(false);
-  const [restoreArmed, setRestoreArmed] = useState(false);
-  const [restoreText, setRestoreText] = useState("");
 
   function handleResetDemo() {
     if (!resetArmed) {
@@ -41,41 +33,6 @@ export default function SettingsScreen() {
     }
     resetDemo();
     setResetArmed(false);
-  }
-
-  function handleCsvExport() {
-    const csv = exportCsv();
-    if (!csv) return;
-    setExportTitle("一覧の表データ");
-    setExportPayload(csv);
-    const downloaded = downloadTextFile(`mamoru-tana-${dateStamp()}.csv`, csv, "text/csv;charset=utf-8");
-    setNotice(downloaded ? "一覧を表データで保存しました。" : "一覧の表データを作成しました。下のテキストを選択して保存できます。");
-  }
-
-  function handleBackupExport() {
-    const backup = exportBackup();
-    setExportTitle("バックアップJSON");
-    setExportPayload(backup);
-    const downloaded = downloadTextFile(`mamoru-tana-backup-${dateStamp()}.json`, backup, "application/json;charset=utf-8");
-    setNotice(downloaded ? "バックアップファイルを作成しました。" : "バックアップを作成しました。下のテキストを選択して保存できます。");
-  }
-
-  function handleRestore() {
-    if (!restoreText.trim()) {
-      setNotice("復元するバックアップJSONを貼り付けてください。");
-      return;
-    }
-    if (!restoreArmed) {
-      setRestoreArmed(true);
-      setNotice("復元すると現在の一覧を置き換えます。もう一度押すと復元します。");
-      return;
-    }
-    if (importBackup(restoreText)) {
-      setRestoreText("");
-      setRestoreArmed(false);
-      setExportPayload("");
-      setExportTitle("");
-    }
   }
 
   return (
@@ -148,7 +105,7 @@ export default function SettingsScreen() {
             大人用の設定はロック中
           </Text>
           <Text selectable style={styles.noteText}>
-            プラン変更、出力、デモリセットは通常モードで操作できます。
+            プラン変更とデモリセットは通常モードで操作できます。
           </Text>
         </View>
       ) : (
@@ -176,43 +133,9 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.panel}>
-            <SectionHeader title="バックアップ" />
-            <Text selectable style={styles.helpText}>
-              端末内データをJSONで控えられます。機種変更や誤削除に備えるため、これはFreeでも使えます。
-            </Text>
-            <View style={styles.actionStack}>
-              <ActionButton label="バックアップ作成" icon={Download} onPress={handleBackupExport} variant="secondary" />
-              <ActionButton label="一覧を表で保存" icon={Download} onPress={handleCsvExport} variant="secondary" />
-            </View>
-            {exportPayload ? (
-              <View style={styles.exportBox}>
-                <Text selectable style={styles.exportTitle}>
-                  {exportTitle}
-                </Text>
-                <Text selectable style={styles.exportText}>
-                  {exportPayload}
-                </Text>
-              </View>
-            ) : null}
-            <TextInput
-              value={restoreText}
-              onChangeText={(value) => {
-                setRestoreText(value);
-                setRestoreArmed(false);
-              }}
-              placeholder="バックアップJSONを貼り付け"
-              placeholderTextColor={colors.muted}
-              maxLength={maxBackupTextLength}
-              multiline
-              style={styles.restoreInput}
-            />
-            <ActionButton label={restoreArmed ? "もう一度押して復元" : "バックアップから復元"} icon={Upload} onPress={handleRestore} variant={restoreArmed ? "danger" : "secondary"} />
-          </View>
-
-          <View style={styles.panel}>
             <SectionHeader title="デモ管理" />
             <Text selectable style={styles.helpText}>
-              販売検証用のデータに戻します。実データ運用中はバックアップを作ってから実行してください。
+              販売検証用のデータに戻します。現在の一覧を置き換えるため、実データ運用中は注意してください。
             </Text>
             <ActionButton label={resetArmed ? "もう一度押して戻す" : "デモを戻す"} icon={RotateCcw} onPress={handleResetDemo} variant={resetArmed ? "danger" : "secondary"} />
           </View>
@@ -238,24 +161,6 @@ export default function SettingsScreen() {
       </View>
     </Screen>
   );
-}
-
-function dateStamp() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function downloadTextFile(filename: string, content: string, mimeType: string) {
-  if (typeof document === "undefined") return false;
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  return true;
 }
 
 function PlanCard({ id, selected, disabled, onPress }: { id: PlanId; selected: boolean; disabled: boolean; onPress: () => void }) {
@@ -501,45 +406,11 @@ const styles = StyleSheet.create({
   featureValueActive: {
     color: colors.blue,
   },
-  actionStack: {
-    gap: 10,
-  },
-  exportBox: {
-    backgroundColor: colors.page,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: 8,
-    padding: 12,
-  },
-  exportText: {
-    color: colors.ink,
-    fontFamily: "monospace",
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  exportTitle: {
-    color: colors.ink,
-    fontSize: 13,
-    fontWeight: "900",
-  },
   helpText: {
     color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
     lineHeight: 20,
-  },
-  restoreInput: {
-    backgroundColor: colors.page,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.ink,
-    fontSize: 13,
-    fontWeight: "700",
-    minHeight: 110,
-    padding: 12,
-    textAlignVertical: "top",
   },
   noteCard: {
     backgroundColor: colors.surface,
