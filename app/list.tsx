@@ -5,6 +5,8 @@ import { useAppState } from "@/src/app-state";
 import { categories } from "@/src/data";
 import { addDays } from "@/src/date";
 import { itemTextLimits } from "@/src/item-data";
+import { makeTemplateDraft, quickAddTemplates } from "@/src/quick-add";
+import type { QuickAddTemplate } from "@/src/quick-add";
 import { ActionButton, CategoryIcon, EmptyState, ItemRow, NoticeBar, Screen, SectionHeader } from "@/src/components";
 import { EasyHome } from "@/src/easy-home";
 import { colors, radius, shadows } from "@/src/theme";
@@ -33,6 +35,13 @@ export default function ListScreen() {
     const saved = addItem(draft);
     if (saved) {
       setDraft({ ...draftTemplate, dueDate: addDays(7) });
+    }
+  }
+
+  function quickAdd(template: QuickAddTemplate) {
+    const saved = addItem(makeTemplateDraft(template));
+    if (saved) {
+      setNotice(`${template.label}を追加しました。`);
     }
   }
 
@@ -86,6 +95,18 @@ export default function ListScreen() {
 
       <View style={styles.formCard}>
         <SectionHeader title="新しく追加" />
+        <View style={styles.quickPanel}>
+          <Text selectable style={styles.quickTitle}>
+            すぐ追加
+          </Text>
+          <View style={styles.quickChipRow}>
+            {quickAddTemplates.map((template) => (
+              <Pressable accessibilityRole="button" key={template.id} onPress={() => quickAdd(template)} style={styles.quickChip}>
+                <Text style={styles.quickChipText}>{template.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
         <View style={styles.inputStack}>
           <TextInput
             value={draft.name}
@@ -274,6 +295,39 @@ const styles = StyleSheet.create({
   },
   inputStack: {
     gap: 10,
+  },
+  quickPanel: {
+    backgroundColor: colors.orangeSoft,
+    borderColor: "#ffdba3",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: 10,
+    padding: 12,
+  },
+  quickTitle: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  quickChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  quickChip: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: "#ffd58e",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 38,
+    paddingHorizontal: 12,
+  },
+  quickChipText: {
+    color: "#b96f08",
+    fontSize: 13,
+    fontWeight: "900",
   },
   input: {
     backgroundColor: colors.page,

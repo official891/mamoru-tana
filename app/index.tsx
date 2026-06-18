@@ -6,6 +6,8 @@ import { categories } from "@/src/data";
 import { daysUntil } from "@/src/date";
 import type { HomeFilter } from "@/src/app-state";
 import { useAppState } from "@/src/app-state";
+import { getEmergencyKitStatus, makeTemplateDraft } from "@/src/quick-add";
+import type { QuickAddTemplate } from "@/src/quick-add";
 import {
   CollapsibleRow,
   EmptyState,
@@ -23,7 +25,7 @@ import { colors, radius, shadows } from "@/src/theme";
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { clearRecall, doneItems, getHomeItems, isEasyMode, items, notice, recallItems, setNotice, soonItems } = useAppState();
+  const { addItem, clearRecall, doneItems, getHomeItems, isEasyMode, items, notice, recallItems, setNotice, soonItems } = useAppState();
   const [filter, setFilter] = useState<HomeFilter>("soon");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -44,6 +46,15 @@ export default function HomeScreen() {
       })),
     [items],
   );
+  const emergencyKit = useMemo(() => getEmergencyKitStatus(items), [items]);
+  const emergencyProgress = Math.round((emergencyKit.covered.length / emergencyKit.total) * 100);
+
+  function addEmergencyTemplate(template: QuickAddTemplate) {
+    const saved = addItem(makeTemplateDraft(template));
+    if (saved) {
+      setNotice(`${template.label}を追加しました。`);
+    }
+  }
 
   if (isEasyMode) {
     return <EasyHome />;
@@ -75,6 +86,35 @@ export default function HomeScreen() {
         <SummaryCard title="近い期限" count={soonItems.length} icon={Clock3} tone="orange" />
         <SummaryCard title="安全チェック" count={recallItems.length} icon={AlertTriangle} tone="red" />
         <SummaryCard title="完了" count={doneItems.length} icon={CheckCircle2} tone="green" />
+      </View>
+
+      <View style={styles.kitPanel}>
+        <View style={styles.kitHeader}>
+          <View style={styles.kitCopy}>
+            <Text selectable style={styles.kitEyebrow}>
+              防災キット
+            </Text>
+            <Text selectable adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.kitTitle}>
+              基本セット {emergencyKit.covered.length}/{emergencyKit.total}
+            </Text>
+          </View>
+          <Mascot mood={emergencyKit.missing.length ? "clipboard" : "wave"} size={78} />
+        </View>
+        <View style={styles.kitProgressTrack}>
+          <View style={[styles.kitProgressFill, { width: `${emergencyProgress}%` }]} />
+        </View>
+        <Text selectable style={styles.kitText}>
+          {emergencyKit.missing.length ? "足りないものをすぐ追加できます。" : "基本セットはそろっています。期限だけ見守りましょう。"}
+        </Text>
+        {emergencyKit.missing.length ? (
+          <View style={styles.kitChipRow}>
+            {emergencyKit.missing.slice(0, 4).map((template) => (
+              <Pressable accessibilityRole="button" key={template.id} onPress={() => addEmergencyTemplate(template)} style={styles.kitChip}>
+                <Text style={styles.kitChipText}>＋ {template.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <FilterTabs
@@ -221,6 +261,76 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 14,
     padding: 14,
+  },
+  kitPanel: {
+    ...shadows.card,
+    backgroundColor: colors.greenSoft,
+    borderColor: "#c5eddc",
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: 12,
+    padding: 14,
+  },
+  kitHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+  },
+  kitCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  kitEyebrow: {
+    color: colors.green,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  kitTitle: {
+    color: colors.ink,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 26,
+    marginTop: 3,
+  },
+  kitProgressTrack: {
+    backgroundColor: colors.surface,
+    borderColor: "#c5eddc",
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 12,
+    overflow: "hidden",
+  },
+  kitProgressFill: {
+    backgroundColor: colors.green,
+    borderRadius: 999,
+    height: "100%",
+  },
+  kitText: {
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 20,
+  },
+  kitChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  kitChip: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: "#b8e4d0",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 38,
+    paddingHorizontal: 12,
+  },
+  kitChipText: {
+    color: colors.green,
+    fontSize: 13,
+    fontWeight: "900",
   },
   linkButton: {
     alignItems: "center",
