@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import type { ComponentType } from "react";
-import { BellRing, Crown, Lock, RefreshCw, RotateCcw, ShieldCheck, Users } from "lucide-react-native";
+import { BellRing, Crown, Lock, RefreshCw, ShieldCheck, Users } from "lucide-react-native";
 import { freeItemLimit, plans, useAppState } from "@/src/app-state";
 import { paidPlansUnavailableMessage } from "@/src/billing";
 import { ActionButton, NoticeBar, Screen, SectionHeader } from "@/src/components";
@@ -24,22 +23,10 @@ export default function SettingsScreen() {
     isSyncingDueNotifications,
     notice,
     plan,
-    resetDemo,
     setEasyMode,
     setNotice,
     syncDueNotifications,
   } = useAppState();
-  const [resetArmed, setResetArmed] = useState(false);
-
-  function handleResetDemo() {
-    if (!resetArmed) {
-      setResetArmed(true);
-      setNotice("もう一度押すとデモデータに戻します。");
-      return;
-    }
-    resetDemo();
-    setResetArmed(false);
-  }
 
   return (
     <Screen>
@@ -158,7 +145,7 @@ export default function SettingsScreen() {
             大人用の設定はロック中
           </Text>
           <Text selectable style={styles.noteText}>
-            プラン変更とデモリセットは通常モードで操作できます。
+            プラン変更は通常モードで操作できます。
           </Text>
         </View>
       ) : (
@@ -183,14 +170,6 @@ export default function SettingsScreen() {
               <FeatureCard icon={ShieldCheck} title="未完了枠" value={isPaidPlan ? "無制限" : `${activeItems.length}/${freeItemLimit}`} active={isPaidPlan} />
               <FeatureCard icon={Users} title="家族共有" value={isFamilyPlan ? "有効" : "準備中"} active={isFamilyPlan} />
             </View>
-          </View>
-
-          <View style={styles.panel}>
-            <SectionHeader title="デモ管理" />
-            <Text selectable style={styles.helpText}>
-              販売検証用のデータに戻します。現在の一覧を置き換えるため、実データ運用中は注意してください。
-            </Text>
-            <ActionButton label={resetArmed ? "もう一度押して戻す" : "デモを戻す"} icon={RotateCcw} onPress={handleResetDemo} variant={resetArmed ? "danger" : "secondary"} />
           </View>
         </>
       )}

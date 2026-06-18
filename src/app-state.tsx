@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { createContext, use, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { canUsePaidPlans, isPaidPlanId, paidPlansUnavailableMessage } from "./billing";
-import { categoryMap, createSeedItems, storageKey } from "./data";
+import { categoryMap, storageKey } from "./data";
 import { daysUntil, isValidDateValue, relativeLabel } from "./date";
 import {
   disableDueNotificationsForItems,
@@ -46,6 +46,7 @@ type AppState = {
   canAddMore: boolean;
   choosePlan: (plan: PlanId) => void;
   clearRecall: (id: string) => void;
+  completeOnboarding: () => void;
   currentPlan: Plan;
   doneItems: ShelfItem[];
   draftTemplate: DraftItem;
@@ -58,12 +59,12 @@ type AppState = {
   isEasyMode: boolean;
   isPaidPlan: boolean;
   isSyncingDueNotifications: boolean;
+  hasSeenOnboarding: boolean;
   items: ShelfItem[];
   notice: string;
   plan: PlanId;
   recallItems: ShelfItem[];
   remainingFreeItems: number;
-  resetDemo: () => void;
   setEasyMode: (enabled: boolean) => void;
   setNotice: (notice: string) => void;
   soonItems: ShelfItem[];
@@ -73,7 +74,17 @@ type AppState = {
 
 const subscriptionKey = "mamoru-tana-plan-v1";
 const easyModeKey = "mamoru-tana-easy-mode-v1";
+const onboardingKey = "mamoru-tana-onboarding-seen-v1";
 export const freeItemLimit = 15;
+
+const legacySampleItemIds = new Set([
+  "seed-freezer-meal",
+  "seed-emergency-water",
+  "seed-medicine",
+  "seed-helmet",
+  "seed-washer-warranty",
+  "seed-passport",
+]);
 
 export const plans: Plan[] = [
   {
@@ -159,12 +170,17 @@ function tapLight() {
   }
 }
 
+function removeLegacySampleItems(items: ShelfItem[]): ShelfItem[] {
+  return items.filter((item) => !legacySampleItemIds.has(item.id));
+}
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const arePaidPlansEnabled = canUsePaidPlans();
   const [items, setItems] = useState<ShelfItem[]>(() => {
     const stored = readJson<unknown>(storageKey, null);
-    if (stored === null) return createSeedItems();
-    return normalizeItems(stored) ?? createSeedItems();
+    if (stored === null) return [];
+    const normalized = normalizeItems(stored);
+    return normalized ? removeLegacySampleItems(normalized) : [];
   });
   const [plan, setPlan] = useState<PlanId>(() => {
     if (!arePaidPlansEnabled) return "free";
@@ -172,6 +188,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return stored === "plus" || stored === "family" ? stored : "free";
   });
   const [isEasyMode, setIsEasyMode] = useState<boolean>(() => readJson<unknown>(easyModeKey, false) === true);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(() => readJson<unknown>(onboardingKey, false) === true);
   const [dueNotifications, setDueNotifications] = useState<DueNotificationState>(() => readDueNotificationState());
   const [isSyncingDueNotifications, setIsSyncingDueNotifications] = useState(false);
   const [notice, setNotice] = useState("");
@@ -193,6 +210,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     writeJson(easyModeKey, isEasyMode);
   }, [isEasyMode]);
+
+  useEffect(() => {
+    writeJson(onboardingKey, hasSeenOnboarding);
+  }, [hasSeenOnboarding]);
 
   useEffect(() => {
     writeDueNotificationState(dueNotifications);
@@ -276,6 +297,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         tapLight();
         setItems((current) => current.map((item) => (item.id === id ? { ...item, recallStatus: "clear" } : item)));
       },
+      completeOnboarding() {
+        tapLight();
+        setHasSeenOnboarding(true);
+      },
       currentPlan,
       doneItems,
       draftTemplate,
@@ -317,16 +342,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       isFamilyPlan,
       isPaidPlan,
       isSyncingDueNotifications,
+      hasSeenOnboarding,
       items,
       notice,
       plan,
       recallItems,
       remainingFreeItems,
-      resetDemo() {
-        tapLight();
-        setItems(createSeedItems());
-        setNotice("デモを戻しました。");
-      },
       setEasyMode(enabled) {
         tapLight();
         setIsEasyMode(enabled);
@@ -364,6 +385,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       isFamilyPlan,
       isPaidPlan,
       isSyncingDueNotifications,
+      hasSeenOnboarding,
       items,
       notice,
       plan,
