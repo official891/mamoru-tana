@@ -1,10 +1,10 @@
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import type { ComponentType } from "react";
-import { BellRing, Crown, Lock, RefreshCw, ShieldCheck, Users } from "lucide-react-native";
+import { BellRing, Clock3, Crown, Lock, RefreshCw, Repeat2, ShieldCheck, Users } from "lucide-react-native";
 import { freeItemLimit, plans, useAppState } from "@/src/app-state";
 import { paidPlansUnavailableMessage } from "@/src/billing";
 import { ActionButton, NoticeBar, Screen, SectionHeader } from "@/src/components";
-import { formatNotificationStatus } from "@/src/due-notifications";
+import { dueReminderHourChoices, formatNotificationStatus } from "@/src/due-notifications";
 import { colors, radius, shadows } from "@/src/theme";
 import type { PlanId } from "@/src/app-state";
 
@@ -23,10 +23,13 @@ export default function SettingsScreen() {
     isSyncingDueNotifications,
     notice,
     plan,
+    setDueNotificationHour,
+    setDueNotificationOverdueFollowUp,
     setEasyMode,
     setNotice,
     syncDueNotifications,
   } = useAppState();
+  const premiumNotificationLocked = !isPaidPlan;
 
   return (
     <Screen>
@@ -66,10 +69,10 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.notificationCopy}>
             <Text selectable style={styles.notificationTitle}>
-              期限が近い日に知らせる
+              基本通知
             </Text>
             <Text selectable style={styles.notificationText}>
-              各アイテムの通知日数に合わせて、朝9時に端末通知を予約します。
+              Freeでも期限前に1回知らせます。
             </Text>
           </View>
           <Switch
@@ -87,7 +90,7 @@ export default function SettingsScreen() {
           />
         </View>
         <Text selectable style={styles.helpText}>
-          {formatNotificationStatus(dueNotifications)}
+          {formatNotificationStatus(dueNotifications, isPaidPlan)}
         </Text>
         {dueNotifications.lastError ? (
           <Text selectable style={styles.warningText}>
@@ -103,6 +106,82 @@ export default function SettingsScreen() {
           variant="secondary"
           disabled={!dueNotifications.enabled || isSyncingDueNotifications}
         />
+
+        <View style={[styles.premiumNotificationBox, isPaidPlan ? styles.premiumNotificationBoxActive : null]}>
+          <View style={styles.premiumNotificationHeader}>
+            <View style={styles.premiumNotificationIcon}>
+              <Crown color={colors.orange} size={22} strokeWidth={2.4} />
+            </View>
+            <View style={styles.premiumNotificationCopy}>
+              <Text selectable style={styles.premiumNotificationTitle}>
+                Plusの安心通知
+              </Text>
+              <Text selectable style={styles.premiumNotificationText}>
+                前日・当日・期限切れ後もフォロー。時間も選べます。
+              </Text>
+            </View>
+            <View style={[styles.premiumBadge, isPaidPlan ? styles.premiumBadgeActive : null]}>
+              <Text style={[styles.premiumBadgeText, isPaidPlan ? styles.premiumBadgeTextActive : null]}>{isPaidPlan ? "利用中" : "Plus"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.premiumFeatureGrid}>
+            <View style={styles.premiumFeatureCard}>
+              <Clock3 color={isPaidPlan ? colors.blue : colors.muted} size={18} strokeWidth={2.4} />
+              <Text selectable style={styles.premiumFeatureText}>
+                前日・当日
+              </Text>
+            </View>
+            <View style={styles.premiumFeatureCard}>
+              <Repeat2 color={isPaidPlan ? colors.blue : colors.muted} size={18} strokeWidth={2.4} />
+              <Text selectable style={styles.premiumFeatureText}>
+                期限切れ後
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.hourButtonGrid}>
+            {dueReminderHourChoices.map((hour) => {
+              const selected = dueNotifications.reminderHour === hour;
+              const disabled = premiumNotificationLocked || isSyncingDueNotifications;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled, selected }}
+                  disabled={disabled}
+                  key={hour}
+                  onPress={() => setDueNotificationHour(hour)}
+                  style={[styles.hourButton, selected ? styles.hourButtonActive : null, disabled ? styles.lockedControl : null]}
+                >
+                  <Text style={[styles.hourButtonText, selected ? styles.hourButtonTextActive : null]}>{hour}:00</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={[styles.premiumSwitchRow, premiumNotificationLocked ? styles.lockedControl : null]}>
+            <View style={styles.premiumSwitchCopy}>
+              <Text selectable style={styles.premiumSwitchTitle}>
+                期限切れ後も知らせる
+              </Text>
+              <Text selectable style={styles.premiumSwitchText}>
+                期限後3日までフォローします。
+              </Text>
+            </View>
+            <Switch
+              value={isPaidPlan && dueNotifications.overdueFollowUp}
+              disabled={premiumNotificationLocked || isSyncingDueNotifications}
+              onValueChange={setDueNotificationOverdueFollowUp}
+              trackColor={{ false: colors.lineStrong, true: colors.orangeSoft }}
+              thumbColor={isPaidPlan && dueNotifications.overdueFollowUp ? colors.orange : "#fff"}
+            />
+          </View>
+          {premiumNotificationLocked ? (
+            <Text selectable style={styles.helpText}>
+              安心通知はPlus/Family接続後に使えます。基本通知はFreeのまま使えます。
+            </Text>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.panel}>
@@ -168,6 +247,7 @@ export default function SettingsScreen() {
             <SectionHeader title="機能" />
             <View style={styles.featureGrid}>
               <FeatureCard icon={ShieldCheck} title="未完了枠" value={isPaidPlan ? "無制限" : `${activeItems.length}/${freeItemLimit}`} active={isPaidPlan} />
+              <FeatureCard icon={BellRing} title="安心通知" value={isPaidPlan ? "有効" : "Plus"} active={isPaidPlan} />
               <FeatureCard icon={Users} title="家族共有" value={isFamilyPlan ? "有効" : "準備中"} active={isFamilyPlan} />
             </View>
           </View>
@@ -354,6 +434,148 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: 19,
   },
+  premiumNotificationBox: {
+    backgroundColor: colors.page,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: 12,
+    padding: 14,
+  },
+  premiumNotificationBoxActive: {
+    backgroundColor: colors.orangeSoft,
+    borderColor: "#ffd58e",
+  },
+  premiumNotificationHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+  },
+  premiumNotificationIcon: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    height: 46,
+    justifyContent: "center",
+    width: 46,
+  },
+  premiumNotificationCopy: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+  premiumNotificationTitle: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: "900",
+    lineHeight: 22,
+  },
+  premiumNotificationText: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  premiumBadge: {
+    backgroundColor: colors.surface,
+    borderColor: colors.lineStrong,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  premiumBadgeActive: {
+    borderColor: "#ffd58e",
+  },
+  premiumBadgeText: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  premiumBadgeTextActive: {
+    color: colors.orange,
+  },
+  premiumFeatureGrid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  premiumFeatureCard: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: "row",
+    gap: 7,
+    minHeight: 42,
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  premiumFeatureText: {
+    color: colors.ink,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  hourButtonGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  hourButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.lineStrong,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexGrow: 1,
+    minHeight: 42,
+    minWidth: 70,
+    justifyContent: "center",
+    paddingHorizontal: 10,
+  },
+  hourButtonActive: {
+    backgroundColor: colors.blueSoft,
+    borderColor: "#9bc9ff",
+  },
+  hourButtonText: {
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  hourButtonTextActive: {
+    color: colors.blue,
+  },
+  premiumSwitchRow: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 64,
+    padding: 12,
+  },
+  premiumSwitchCopy: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+  premiumSwitchTitle: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  premiumSwitchText: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 17,
+  },
+  lockedControl: {
+    opacity: 0.55,
+  },
   easyModeRow: {
     alignItems: "center",
     backgroundColor: colors.greenSoft,
@@ -444,6 +666,7 @@ const styles = StyleSheet.create({
   },
   featureGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
   featureCard: {
@@ -455,6 +678,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 7,
     minHeight: 104,
+    minWidth: "46%",
     padding: 14,
   },
   featureCardActive: {

@@ -7,6 +7,7 @@ import { daysUntil, isValidDateValue, relativeLabel } from "./date";
 import {
   disableDueNotificationsForItems,
   enableDueNotificationsForItems,
+  normalizeDueReminderHour,
   readDueNotificationState,
   syncDueNotificationsForItems,
   writeDueNotificationState,
@@ -66,6 +67,8 @@ type AppState = {
   recallItems: ShelfItem[];
   remainingFreeItems: number;
   setEasyMode: (enabled: boolean) => void;
+  setDueNotificationHour: (hour: number) => void;
+  setDueNotificationOverdueFollowUp: (enabled: boolean) => void;
   setNotice: (notice: string) => void;
   soonItems: ShelfItem[];
   syncDueNotifications: () => Promise<void>;
@@ -93,7 +96,7 @@ export const plans: Plan[] = [
     price: "0円",
     description: "まずは家の期限を試す",
     limitLabel: "未完了15件まで",
-    features: ["端末保存", "今日やること", "完了分は枠外"],
+    features: ["端末保存", "基本通知1回", "完了分は枠外"],
   },
   {
     id: "plus",
@@ -101,7 +104,7 @@ export const plans: Plan[] = [
     price: "480円/月",
     description: "うっかり損を減らす本命",
     limitLabel: "登録無制限",
-    features: ["登録無制限", "安全チェック強化", "家族準備"],
+    features: ["登録無制限", "安心通知", "安全チェック強化"],
   },
   {
     id: "family",
@@ -192,6 +195,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [dueNotifications, setDueNotifications] = useState<DueNotificationState>(() => readDueNotificationState());
   const [isSyncingDueNotifications, setIsSyncingDueNotifications] = useState(false);
   const [notice, setNotice] = useState("");
+  const currentPlan = plans.find((entry) => entry.id === plan) ?? plans[0];
+  const isPaidPlan = arePaidPlansEnabled && plan !== "free";
+  const isFamilyPlan = arePaidPlansEnabled && plan === "family";
 
   useEffect(() => {
     writeJson(storageKey, items);
@@ -223,7 +229,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     if (!dueNotifications.enabled || isSyncingDueNotifications) return;
 
     let cancelled = false;
-    syncDueNotificationsForItems(items).then((nextState) => {
+    syncDueNotificationsForItems(items, {
+      isPremium: isPaidPlan,
+      reminderHour: dueNotifications.reminderHour,
+      overdueFollowUp: dueNotifications.overdueFollowUp,
+    }).then((nextState) => {
       if (!cancelled) {
         setDueNotifications(nextState);
       }
@@ -232,15 +242,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [dueNotifications.enabled, isSyncingDueNotifications, items]);
+  }, [dueNotifications.enabled, dueNotifications.overdueFollowUp, dueNotifications.reminderHour, isPaidPlan, isSyncingDueNotifications, items]);
 
   const activeItems = useMemo(() => items.filter((item) => !item.done), [items]);
   const doneItems = useMemo(() => items.filter((item) => item.done), [items]);
   const soonItems = useMemo(() => sortByUrgency(activeItems).filter((item) => isSoon(item) || daysUntil(item.dueDate) <= 7), [activeItems]);
   const recallItems = useMemo(() => sortByUrgency(activeItems).filter((item) => item.recallStatus !== "clear"), [activeItems]);
-  const currentPlan = plans.find((entry) => entry.id === plan) ?? plans[0];
-  const isPaidPlan = arePaidPlansEnabled && plan !== "free";
-  const isFamilyPlan = arePaidPlansEnabled && plan === "family";
   const remainingFreeItems = Math.max(freeItemLimit - activeItems.length, 0);
   const canAddMore = isPaidPlan || activeItems.length < freeItemLimit;
 
@@ -308,7 +315,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       async disableDueNotifications() {
         setIsSyncingDueNotifications(true);
         try {
-          const nextState = await disableDueNotificationsForItems();
+          const nextState = await disableDueNotificationsForItems({
+            isPremium: isPaidPlan,
+            reminderHour: dueNotifications.reminderHour,
+            overdueFollowUp: dueNotifications.overdueFollowUp,
+          });
           setDueNotifications(nextState);
           setNotice("期限通知をオフにしました。");
         } finally {
@@ -318,9 +329,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       async enableDueNotifications() {
         setIsSyncingDueNotifications(true);
         try {
-          const nextState = await enableDueNotificationsForItems(items);
+          const nextState = await enableDueNotificationsForItems(items, {
+            isPremium: isPaidPlan,
+            reminderHour: dueNotifications.reminderHour,
+            overdueFollowUp: dueNotifications.overdueFollowUp,
+          });
           setDueNotifications(nextState);
-          setNotice(nextState.enabled ? "期限通知をオンにしました。" : nextState.lastError ?? "期限通知を有効にできませんでした。");
+          setNotice(nextState.enabled ? (isPaidPlan ? "安心通知をオンにしました。" : "基本通知をオンにしました。") : nextState.lastError ?? "期限通知を有効にできませんでした。");
         } finally {
           setIsSyncingDueNotifications(false);
         }
@@ -353,6 +368,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setIsEasyMode(enabled);
         setNotice(enabled ? "かんたんモードにしました。" : "通常モードに戻しました。");
       },
+      setDueNotificationHour(hour) {
+        tapLight();
+        if (!isPaidPlan) {
+          setNotice("通知時間の変更はPlusの安心通知で使えます。");
+          return;
+        }
+        const reminderHour = normalizeDueReminderHour(hour);
+        setDueNotifications((current) => ({ ...current, reminderHour }));
+        setNotice(`通知時間を${reminderHour}:00にしました。`);
+      },
+      setDueNotificationOverdueFollowUp(enabled) {
+        tapLight();
+        if (!isPaidPlan) {
+          setNotice("期限切れ後のフォローはPlusの安心通知で使えます。");
+          return;
+        }
+        setDueNotifications((current) => ({ ...current, overdueFollowUp: enabled }));
+        setNotice(enabled ? "期限切れ後のフォローをオンにしました。" : "期限切れ後のフォローをオフにしました。");
+      },
       setNotice,
       soonItems,
       async syncDueNotifications() {
@@ -362,7 +396,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         }
         setIsSyncingDueNotifications(true);
         try {
-          const nextState = await syncDueNotificationsForItems(items);
+          const nextState = await syncDueNotificationsForItems(items, {
+            isPremium: isPaidPlan,
+            reminderHour: dueNotifications.reminderHour,
+            overdueFollowUp: dueNotifications.overdueFollowUp,
+          });
           setDueNotifications(nextState);
           setNotice(nextState.enabled ? "期限通知を再設定しました。" : nextState.lastError ?? "期限通知を再設定できませんでした。");
         } finally {
