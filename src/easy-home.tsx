@@ -24,6 +24,8 @@ export function EasyHome() {
 
   const adultItem = useMemo(() => tasks.find((item) => item.id === adultItemId) ?? null, [adultItemId, tasks]);
   const safetyCount = tasks.filter((item) => item.recallStatus !== "clear").length;
+  const compact = width < 430;
+  const tiny = width < 360;
   const stackCounts = width < 360;
 
   return (
@@ -31,30 +33,30 @@ export function EasyHome() {
       <NoticeBar message={notice} onClose={() => setNotice("")} />
 
       <View style={styles.hero}>
-        <Mascot mood={safetyCount ? "boxWarning" : "wave"} size={100} />
+        <Mascot mood={safetyCount ? "boxWarning" : "wave"} size={compact ? 82 : 100} />
         <View style={styles.heroCopy}>
           <Text selectable style={styles.eyebrow}>
             かんたんモード
           </Text>
-          <Text selectable style={styles.title}>
+          <Text selectable adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={[styles.title, tiny ? styles.titleTiny : null]}>
             きょうやること
           </Text>
         </View>
       </View>
 
       <View style={[styles.countRow, stackCounts ? styles.countRowStack : null]}>
-        <View style={[styles.countCard, styles.countCardOrange]}>
-          <Clock3 color={colors.orange} size={28} strokeWidth={2.5} />
-          <Text selectable style={styles.countValue}>
+        <View style={[styles.countCard, compact ? styles.countCardCompact : null, styles.countCardOrange]}>
+          <Clock3 color={colors.orange} size={compact ? 24 : 28} strokeWidth={2.5} />
+          <Text selectable style={[styles.countValue, compact ? styles.countValueCompact : null]}>
             {tasks.length}
           </Text>
           <Text selectable style={styles.countLabel}>
             やること
           </Text>
         </View>
-        <View style={[styles.countCard, styles.countCardRed]}>
-          <AlertTriangle color={colors.red} size={28} strokeWidth={2.5} />
-          <Text selectable style={styles.countValue}>
+        <View style={[styles.countCard, compact ? styles.countCardCompact : null, styles.countCardRed]}>
+          <AlertTriangle color={colors.red} size={compact ? 24 : 28} strokeWidth={2.5} />
+          <Text selectable style={[styles.countValue, compact ? styles.countValueCompact : null]}>
             {safetyCount}
           </Text>
           <Text selectable style={styles.countLabel}>
@@ -64,7 +66,7 @@ export function EasyHome() {
       </View>
 
       <View style={styles.ruleCard}>
-        <Mascot mood="search" size={72} />
+        <Mascot mood="search" size={compact ? 58 : 72} />
         <Text selectable style={styles.ruleText}>
           あかいカードは おとなの人に みせる
         </Text>
@@ -229,6 +231,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     lineHeight: 38,
   },
+  titleTiny: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
   countRow: {
     flexDirection: "row",
     gap: 12,
@@ -246,6 +252,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
   },
+  countCardCompact: {
+    minHeight: 114,
+    padding: 13,
+  },
   countCardOrange: {
     backgroundColor: colors.orangeSoft,
     borderColor: "#ffdba3",
@@ -260,6 +270,9 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontVariant: ["tabular-nums"],
     letterSpacing: 0,
+  },
+  countValueCompact: {
+    fontSize: 38,
   },
   countLabel: {
     color: colors.muted,

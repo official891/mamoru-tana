@@ -105,7 +105,7 @@ export function SummaryCard({
         <View style={[styles.roundIcon, compact ? styles.roundIconCompact : null, { backgroundColor: palette.bg }]}>
           <Icon color="#fff" size={compact ? 14 : 16} strokeWidth={2.6} />
         </View>
-        <Text selectable style={styles.summaryTitle} numberOfLines={1}>
+        <Text selectable adjustsFontSizeToFit minimumFontScale={0.76} style={[styles.summaryTitle, compact ? styles.summaryTitleCompact : null]} numberOfLines={1}>
           {title}
         </Text>
       </View>
@@ -436,6 +436,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: "800",
+  },
+  summaryTitleCompact: {
+    fontSize: 12,
   },
   summaryCount: {
     fontSize: 36,

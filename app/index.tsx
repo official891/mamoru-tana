@@ -66,6 +66,7 @@ export default function HomeScreen() {
   }
 
   const compactHome = width < 430;
+  const tinyHome = width < 360;
   const stackSummary = width < 340;
 
   return (
@@ -86,13 +87,13 @@ export default function HomeScreen() {
               </Text>
             </View>
           </View>
-          <View style={styles.onboardingSteps}>
+          <View style={[styles.onboardingSteps, tinyHome ? styles.onboardingStepsStack : null]}>
             {[
               { number: "1", title: "追加", text: "名前かテンプレで登録" },
               { number: "2", title: "期限", text: "日付を入れる" },
               { number: "3", title: "完了", text: "終わったら完了" },
             ].map((step) => (
-              <View key={step.number} style={styles.onboardingStep}>
+              <View key={step.number} style={[styles.onboardingStep, tinyHome ? styles.onboardingStepStack : null]}>
                 <View style={styles.onboardingStepBadge}>
                   <Text style={styles.onboardingStepBadgeText}>{step.number}</Text>
                 </View>
@@ -118,17 +119,19 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      <View style={styles.hero}>
-        <Mascot mood={recallItems.length ? "search" : "wave"} size={compactHome ? 76 : 100} />
-        <View style={styles.heroText}>
-          <Text selectable adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.heroTitle}>
-            おかえりなさい！
-          </Text>
-          <Text selectable style={styles.heroSub}>
-            おうちストックを管理しよう
-          </Text>
+      <View style={[styles.hero, tinyHome ? styles.heroTiny : null]}>
+        <View style={styles.heroIntro}>
+          <Mascot mood={recallItems.length ? "search" : "wave"} size={compactHome ? 76 : 100} />
+          <View style={styles.heroText}>
+            <Text selectable adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.heroTitle, tinyHome ? styles.heroTitleTiny : null]}>
+              おかえりなさい！
+            </Text>
+            <Text selectable style={styles.heroSub}>
+              おうちストックを管理しよう
+            </Text>
+          </View>
         </View>
-        <Pressable accessibilityLabel="今日の確認" accessibilityRole="button" onPress={() => setNotice("今日の確認をまとめました。")} style={styles.bellButton}>
+        <Pressable accessibilityLabel="今日の確認" accessibilityRole="button" onPress={() => setNotice("今日の確認をまとめました。")} style={[styles.bellButton, tinyHome ? styles.bellButtonTiny : null]}>
           <Bell color={colors.ink} size={24} strokeWidth={2.3} />
           <View style={styles.bellDot} />
         </Pressable>
@@ -259,6 +262,18 @@ const styles = StyleSheet.create({
     gap: 10,
     minHeight: 90,
   },
+  heroTiny: {
+    alignItems: "stretch",
+    flexDirection: "column",
+    gap: 2,
+  },
+  heroIntro: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    gap: 10,
+    minWidth: 0,
+  },
   heroText: {
     flex: 1,
     minWidth: 0,
@@ -268,6 +283,9 @@ const styles = StyleSheet.create({
     fontSize: 23,
     fontWeight: "900",
     letterSpacing: 0,
+  },
+  heroTitleTiny: {
+    fontSize: 20,
   },
   heroSub: {
     color: colors.ink,
@@ -287,6 +305,12 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: "center",
     width: 48,
+  },
+  bellButtonTiny: {
+    alignSelf: "flex-end",
+    height: 42,
+    marginTop: -10,
+    width: 42,
   },
   bellDot: {
     backgroundColor: colors.red,
@@ -355,6 +379,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
+  onboardingStepsStack: {
+    flexDirection: "column",
+  },
   onboardingStep: {
     alignItems: "flex-start",
     backgroundColor: colors.blueSoft,
@@ -365,6 +392,12 @@ const styles = StyleSheet.create({
     gap: 7,
     minHeight: 92,
     padding: 9,
+  },
+  onboardingStepStack: {
+    alignItems: "center",
+    flex: 0,
+    flexDirection: "row",
+    minHeight: 52,
   },
   onboardingStepBadge: {
     alignItems: "center",

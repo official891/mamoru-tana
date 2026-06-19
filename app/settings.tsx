@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, StyleSheet, Switch, Text, useWindowDimensions, View } from "react-native";
 import type { ComponentType } from "react";
 import { BellRing, Clock3, Crown, Lock, RefreshCw, Repeat2, ShieldCheck, Users } from "lucide-react-native";
 import { freeItemLimit, plans, useAppState } from "@/src/app-state";
@@ -9,6 +9,8 @@ import { colors, radius, shadows } from "@/src/theme";
 import type { PlanId } from "@/src/app-state";
 
 export default function SettingsScreen() {
+  const { width } = useWindowDimensions();
+  const compactSettings = width < 360;
   const {
     arePaidPlansEnabled,
     activeItems,
@@ -44,19 +46,19 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
-      <View style={styles.currentCard}>
-        <View style={styles.currentIcon}>
+      <View style={[styles.currentCard, compactSettings ? styles.currentCardCompact : null]}>
+        <View style={[styles.currentIcon, compactSettings ? styles.decorativeIconHidden : null]}>
           <Crown color={colors.orange} size={26} strokeWidth={2.3} />
         </View>
         <View style={styles.currentBody}>
           <Text selectable style={styles.currentTitle}>
             {currentPlan.name}
           </Text>
-          <Text selectable style={styles.currentMeta}>
+          <Text selectable adjustsFontSizeToFit minimumFontScale={0.82} numberOfLines={1} style={styles.currentMeta}>
             {currentPlan.price}・{currentPlan.limitLabel}
           </Text>
         </View>
-        <View style={styles.currentBadge}>
+        <View style={[styles.currentBadge, compactSettings ? styles.currentBadgeCompact : null]}>
           <Text style={styles.currentBadgeText}>利用中</Text>
         </View>
       </View>
@@ -111,11 +113,11 @@ export default function SettingsScreen() {
 
         <View style={[styles.premiumNotificationBox, isPaidPlan ? styles.premiumNotificationBoxActive : null]}>
           <View style={styles.premiumNotificationHeader}>
-            <View style={styles.premiumNotificationIcon}>
+            <View style={[styles.premiumNotificationIcon, compactSettings ? styles.decorativeIconHidden : null]}>
               <Crown color={colors.orange} size={22} strokeWidth={2.4} />
             </View>
             <View style={styles.premiumNotificationCopy}>
-              <Text selectable style={styles.premiumNotificationTitle}>
+              <Text selectable adjustsFontSizeToFit minimumFontScale={0.82} numberOfLines={1} style={styles.premiumNotificationTitle}>
                 Plusの安心通知
               </Text>
               <Text selectable style={styles.premiumNotificationText}>
@@ -360,6 +362,10 @@ const styles = StyleSheet.create({
     minHeight: 78,
     padding: 13,
   },
+  currentCardCompact: {
+    gap: 8,
+    paddingHorizontal: 12,
+  },
   currentIcon: {
     alignItems: "center",
     backgroundColor: colors.surface,
@@ -367,6 +373,9 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: "center",
     width: 48,
+  },
+  decorativeIconHidden: {
+    display: "none",
   },
   currentBody: {
     flex: 1,
@@ -388,6 +397,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
+  },
+  currentBadgeCompact: {
+    paddingHorizontal: 8,
   },
   currentBadgeText: {
     color: colors.orange,
