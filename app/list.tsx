@@ -193,7 +193,7 @@ export default function ListScreen() {
                   安全チェック
                 </Text>
                 <Text selectable style={styles.switchMeta}>
-                  大人の確認が必要なもの
+                  家族と確認が必要なもの
                 </Text>
               </View>
               <Switch

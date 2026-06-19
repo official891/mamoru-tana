@@ -96,7 +96,7 @@ export const quickAddTemplates: QuickAddTemplate[] = [
     place: "薬箱",
     days: 180,
     reminderDays: 30,
-    notes: "期限と残量を大人が確認",
+    notes: "期限と残量を家族と確認",
     recallWatch: true,
     keywords: ["常備薬", "薬", "解熱剤", "医薬品"],
   },

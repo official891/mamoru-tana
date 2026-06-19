@@ -198,10 +198,10 @@ export default function SettingsScreen() {
             <Lock color={colors.green} size={25} strokeWidth={2.4} />
             <View style={styles.easyModeCopy}>
               <Text selectable style={styles.easyModeTitle}>
-                こども向けホーム中
+                かんたんホーム中
               </Text>
               <Text selectable style={styles.easyModeText}>
-                通常モードに戻すには大人がここを長押し
+                通常モードに戻すにはここを長押し
               </Text>
             </View>
           </Pressable>
@@ -209,10 +209,10 @@ export default function SettingsScreen() {
           <View style={styles.easyModeRow}>
             <View style={styles.easyModeCopy}>
               <Text selectable style={styles.easyModeTitle}>
-                こども向けホーム
+                かんたんホーム
               </Text>
               <Text selectable style={styles.easyModeText}>
-                大きなカードと短い言葉だけにします
+                大きな文字と少ない操作にします
               </Text>
             </View>
             <Switch
@@ -228,7 +228,7 @@ export default function SettingsScreen() {
       {isEasyMode ? (
         <View style={styles.noteCard}>
           <Text selectable style={styles.noteTitle}>
-            大人用の設定はロック中
+            詳細設定はロック中
           </Text>
           <Text selectable style={styles.noteText}>
             プラン変更は通常モードで操作できます。

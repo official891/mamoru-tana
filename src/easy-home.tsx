@@ -39,7 +39,7 @@ export function EasyHome() {
             かんたんモード
           </Text>
           <Text selectable adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={[styles.title, tiny ? styles.titleTiny : null]}>
-            きょうやること
+            今日やること
           </Text>
         </View>
       </View>
@@ -60,7 +60,7 @@ export function EasyHome() {
             {safetyCount}
           </Text>
           <Text selectable style={styles.countLabel}>
-            おとなとみる
+            確認する
           </Text>
         </View>
       </View>
@@ -68,7 +68,7 @@ export function EasyHome() {
       <View style={styles.ruleCard}>
         <Mascot mood="search" size={compact ? 58 : 72} />
         <Text selectable style={styles.ruleText}>
-          あかいカードは おとなの人に みせる
+          赤いカードは 家族と確認
         </Text>
       </View>
 
@@ -89,10 +89,10 @@ export function EasyHome() {
           <View style={styles.emptyCard}>
             <CheckCircle2 color={colors.green} size={42} strokeWidth={2.4} />
             <Text selectable style={styles.emptyTitle}>
-              きょうは だいじょうぶ
+              今日は大丈夫
             </Text>
             <Text selectable style={styles.emptyText}>
-              やることが あると ここにでます
+              必要な確認がここに出ます
             </Text>
           </View>
         )}
@@ -105,7 +105,7 @@ export function EasyHome() {
           if (!adultItem) return;
           clearRecall(adultItem.id);
           setAdultItemId(null);
-          setNotice("大人の確認が終わりました。");
+          setNotice("確認が終わりました。");
         }}
       />
     </Screen>
@@ -132,18 +132,18 @@ function EasyTaskCard({
             {item.name}
           </Text>
           <Text selectable style={[styles.taskHint, needsAdult ? styles.taskHintAlert : null]}>
-            {needsAdult ? "おとなとみる" : easyDueLabel(item.dueDate)}
+            {needsAdult ? "家族と確認" : easyDueLabel(item.dueDate)}
           </Text>
         </View>
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={needsAdult ? `${item.name}を大人に見せる` : `${item.name}をできたにする`}
-        accessibilityHint={needsAdult ? "大人向けの確認画面を開きます。" : "このカードを完了にします。"}
+        accessibilityLabel={needsAdult ? `${item.name}を確認する` : `${item.name}を完了にする`}
+        accessibilityHint={needsAdult ? "確認画面を開きます。" : "このカードを完了にします。"}
         onPress={needsAdult ? onShowAdult : onDone}
         style={({ pressed }) => [styles.bigButton, needsAdult ? styles.bigButtonAlert : styles.bigButtonDone, pressed ? styles.buttonPressed : null]}
       >
-        <Text style={styles.bigButtonText}>{needsAdult ? "みせる" : "できた"}</Text>
+        <Text style={styles.bigButtonText}>{needsAdult ? "確認する" : "完了"}</Text>
       </Pressable>
     </View>
   );
@@ -160,7 +160,7 @@ function AdultCheckModal({ item, onClose, onConfirm }: { item: ShelfItem | null;
             <Mascot mood="alert" size={104} />
           </View>
           <Text selectable style={styles.adultTitle}>
-            おとなの人へ
+            確認する方へ
           </Text>
           <Text selectable style={styles.adultText}>
             このカードは安全チェックが必要です。問題ないことを確認したら、下のボタンを長押ししてください。
@@ -185,10 +185,10 @@ function AdultCheckModal({ item, onClose, onConfirm }: { item: ShelfItem | null;
             onLongPress={onConfirm}
             style={({ pressed }) => [styles.adultConfirmButton, pressed ? styles.buttonPressed : null]}
           >
-            <Text style={styles.adultConfirmText}>大人が長押しで確認</Text>
+            <Text style={styles.adultConfirmText}>長押しで確認済み</Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.adultCancelButton, pressed ? styles.buttonPressed : null]}>
-            <Text style={styles.adultCancelText}>もどる</Text>
+            <Text style={styles.adultCancelText}>戻る</Text>
           </Pressable>
         </View>
       </View>
@@ -198,11 +198,11 @@ function AdultCheckModal({ item, onClose, onConfirm }: { item: ShelfItem | null;
 
 function easyDueLabel(dateValue: string) {
   const days = daysUntil(dateValue);
-  if (!Number.isFinite(days)) return "ひづけをみる";
-  if (days < 0) return `${Math.abs(days)}にちすぎ`;
-  if (days === 0) return "きょう";
-  if (days === 1) return "あした";
-  return `あと${days}にち`;
+  if (!Number.isFinite(days)) return "日付を確認";
+  if (days < 0) return `${Math.abs(days)}日すぎ`;
+  if (days === 0) return "今日";
+  if (days === 1) return "明日";
+  return `あと${days}日`;
 }
 
 const styles = StyleSheet.create({
