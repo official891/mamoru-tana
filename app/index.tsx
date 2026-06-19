@@ -69,8 +69,6 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <NoticeBar message={notice} onClose={() => setNotice("")} />
-
       {!hasSeenOnboarding && items.length === 0 ? (
         <View style={styles.onboardingPanel}>
           <View style={styles.onboardingHeader}>
@@ -126,14 +124,16 @@ export default function HomeScreen() {
             おかえりなさい！
           </Text>
           <Text selectable style={styles.heroSub}>
-            おうちストックを一緒に管理しよう
+            おうちストックを管理しよう
           </Text>
         </View>
-        <Pressable accessibilityRole="button" onPress={() => setNotice("今日の確認をまとめました。")} style={styles.bellButton}>
+        <Pressable accessibilityLabel="今日の確認" accessibilityRole="button" onPress={() => setNotice("今日の確認をまとめました。")} style={styles.bellButton}>
           <Bell color={colors.ink} size={24} strokeWidth={2.3} />
           <View style={styles.bellDot} />
         </Pressable>
       </View>
+
+      <NoticeBar message={notice} onClose={() => setNotice("")} />
 
       <View style={[styles.summaryGrid, stackSummary ? styles.summaryGridStack : null]}>
         <SummaryCard title="近い期限" count={soonItems.length} icon={Clock3} tone="orange" />
@@ -257,7 +257,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     minHeight: 116,
-    position: "relative",
   },
   heroText: {
     flex: 1,
@@ -283,11 +282,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: 14,
     borderWidth: 1,
+    flexShrink: 0,
     height: 54,
     justifyContent: "center",
-    position: "absolute",
-    right: 0,
-    top: 18,
     width: 54,
   },
   bellDot: {
