@@ -115,6 +115,57 @@ li {
   padding: 12px 14px;
 }
 
+.support-form {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.support-form label {
+  color: var(--ink);
+  display: grid;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.support-form input,
+.support-form select,
+.support-form textarea {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.support-form textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.primary-button {
+  background: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  min-height: 48px;
+  padding: 10px 16px;
+}
+
+.small-note {
+  font-size: 14px;
+}
+
 .list {
   padding-left: 1.2em;
 }

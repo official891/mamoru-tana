@@ -20,25 +20,61 @@
       <article class="card">
         <span class="badge">Support</span>
         <h1>まもる棚 サポート</h1>
-        <p>最終更新日: 2026-06-20</p>
+        <p>最終更新日: 2026-06-21</p>
 
         <h2>よくある質問</h2>
         <p><strong>Q. データはどこに保存されますか。</strong><br />現在は利用者の端末内に保存されます。</p>
         <p><strong>Q. 機種変更の前に何をすればいいですか。</strong><br />現在はデータ移行機能を提供していません。新しい端末では必要なアイテムを改めて登録してください。</p>
-        <p><strong>Q. Plus/Familyは使えますか。</strong><br />現在は無料公開モードです。アプリ内課金の接続後に提供予定です。</p>
+        <p><strong>Q. Plus/Familyは使えますか。</strong><br />現在利用できるプランはFreeです。Plus/Familyは準備ができ次第、アプリ内で案内します。</p>
         <p><strong>Q. 期限通知が来ません。</strong><br />アプリ内の設定で期限通知をオンにし、端末側でも通知を許可してください。Freeでは各アイテムの通知日数に合わせて1回通知します。Plus/Family接続後は、前日・当日・期限切れ後の安心通知も利用できます。</p>
         <p><strong>Q. 高齢の家族でも使いやすいですか。</strong><br />設定のかんたんモードをオンにすると、文字が大きく、操作が少ないホーム画面になります。食品、防災用品、薬など安全に関わるものは家族と確認してください。</p>
 
         <h2>不具合や要望</h2>
         <p>
-          不具合や要望を送る場合は、ストア掲載ページの開発者連絡先、または公開元GitHubリポジトリのIssuesをご利用ください。
-          個人情報、住所、電話番号、健康情報などは書き込まないでください。
+          不具合、要望、使い方の質問は、下のフォームに入力してください。送信ボタンを押すとメールアプリが開き、入力内容が
+          <a href="mailto:birdvitals.support@gmail.com">birdvitals.support@gmail.com</a> 宛ての本文に入ります。
+          内容を確認してから送信してください。
         </p>
-        <p>
-          <a id="issues-link" href="https://github.com/" rel="noopener">GitHub Issuesを開く</a>
-        </p>
-        <p id="issues-note" class="notice">
-          このページをGitHub Pagesで公開すると、GitHub Issuesへのリンクが自動で設定されます。
+        <form id="support-form" class="support-form">
+          <label>
+            お問い合わせの種類
+            <select name="kind" required>
+              <option value="不具合">不具合</option>
+              <option value="要望">要望</option>
+              <option value="使い方の質問">使い方の質問</option>
+              <option value="データ削除">データ削除</option>
+              <option value="その他">その他</option>
+            </select>
+          </label>
+
+          <label>
+            返信先メールアドレス（任意）
+            <input name="replyTo" type="email" autocomplete="email" placeholder="name@example.com" />
+          </label>
+
+          <label>
+            端末・OS（任意）
+            <input name="device" type="text" placeholder="例: iPhone 15 / iOS 18" />
+          </label>
+
+          <label>
+            アプリのバージョン（任意）
+            <input name="appVersion" type="text" placeholder="例: 0.1.0" />
+          </label>
+
+          <label>
+            内容
+            <textarea name="message" required rows="8" placeholder="困っていること、試した操作、表示された文言などを書いてください。"></textarea>
+          </label>
+
+          <p class="notice">
+            住所、電話番号、健康情報、パスワード、クレジットカード番号などは書かないでください。
+          </p>
+
+          <button class="primary-button" type="submit">メールを作成する</button>
+        </form>
+        <p class="small-note">
+          メールアプリが開かない場合は、birdvitals.support@gmail.com 宛てに直接送ってください。
         </p>
 
         <h2>データ削除</h2>
@@ -54,17 +90,34 @@
       </article>
     </main>
     <script>
-      (function () {
-        var host = window.location.hostname;
-        var path = window.location.pathname.split("/").filter(Boolean);
-        var link = document.getElementById("issues-link");
-        var note = document.getElementById("issues-note");
-        if (!link || !note || !host.endsWith(".github.io") || path.length === 0) return;
-        var user = host.replace(".github.io", "");
-        var repo = path[0];
-        link.href = "https://github.com/" + encodeURIComponent(user) + "/" + encodeURIComponent(repo) + "/issues";
-        note.textContent = "個人情報を書かずに、不具合の状況、端末名、OS、アプリのバージョンを記載してください。";
-      })();
+      const supportForm = document.getElementById("support-form");
+      const supportEmail = "birdvitals.support@gmail.com";
+
+      supportForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const formData = new FormData(supportForm);
+        const kind = formData.get("kind") || "";
+        const replyTo = formData.get("replyTo") || "";
+        const device = formData.get("device") || "";
+        const appVersion = formData.get("appVersion") || "";
+        const message = formData.get("message") || "";
+        const subject = `まもる棚 お問い合わせ: ${kind}`;
+        const body = [
+          "まもる棚 サポート宛て",
+          "",
+          `お問い合わせの種類: ${kind}`,
+          `返信先メールアドレス: ${replyTo}`,
+          `端末・OS: ${device}`,
+          `アプリのバージョン: ${appVersion}`,
+          "",
+          "内容:",
+          message,
+          "",
+          "注意: 住所、電話番号、健康情報、パスワード、クレジットカード番号などは送らないでください。",
+        ].join("\n");
+
+        window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      });
     </script>
   </body>
 </html>
